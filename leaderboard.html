@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRisoity - Leaderboard</title>
+    <link rel="stylesheet" href="leaderboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <script type="module" src="./timeSync.js"></script>
+    <script>
+        // Add this script in the head section
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeIcon = document.getElementById('theme-icon');
+            
+            // Check saved theme
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeIcon.setAttribute('name', 'sunny-outline');
+            }
+
+            // Theme toggle
+            themeIcon.addEventListener('click', () => {
+                document.body.classList.toggle('dark-theme');
+                const isDark = document.body.classList.contains('dark-theme');
+                themeIcon.setAttribute('name', isDark ? 'sunny-outline' : 'moon-outline');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            });
+        });
+    </script>
+</head>
+<body>
+    <nav>
+        <div class="logo">
+            <img src="/images/logo/logo_light.jpg" alt="Light Logo" class="logo-light" draggable="false">
+            <img src="/images/logo/logo_dark.jpg" alt="Dark Logo" class="logo-dark" draggable="false">
+        </div>
+        <div class="game-title">
+            <span class="title-qr">QR</span><span class="title-iosity">iosity</span>
+        </div>
+        <div class="nav-logo">
+            <img src="/images/logo/advitya_light.png" alt="Advitya Light Logo" class="logo-light" draggable="false">
+            <img src="/images/logo/advitya_dark.png" alt="Advitya Dark Logo" class="logo-dark" draggable="false">
+        </div>
+    </nav>
+
+    <!-- Move theme switch outside nav -->
+    <div class="theme-switch">
+        <ion-icon name="moon-outline" id="theme-icon"></ion-icon>
+    </div>
+
+    <main class="leaderboard-page">
+        <h1 class="leaderboard-title">Leaderboard</h1>
+        
+        <div class="player-avatar-container">
+            <div class="player-avatar">
+                <img src="/images/avatar/default.png" alt="Player Avatar" id="playerAvatar">
+            </div>
+            <div class="avatar-overlay">
+                <ion-icon name="person-circle-outline"></ion-icon>
+            </div>
+        </div>
+
+        <div id="rankDisplay" class="rank-display">
+            <p>Your Rank: <span id="playerRank">-</span></p>
+        </div>
+
+        <div class="leaderboard-container">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team</th>
+                        <th>Time</th>
+                        <th>Moves</th>
+                        <th>Score</th>
+                        <th>Pts</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <!-- Rankings will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="progress-text">Redirecting soon...</div>
+        </div>
+    </main>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loader"></div>
+        <p>Loading results...</p>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-credit">Made with <span class="heart">❤</span> by VITERA Club</p>
+        </div>
+        <div class="footer-logo">
+            <img src="/images/logo/vitera_landscape_light.png" alt="Vitera Landscape Light Logo" class="logo-light" draggable="false">
+            <img src="/images/logo/vitera_landscape_dark.png" alt="Vitera Landscape Dark Logo" class="logo-dark" draggable="false">
+        </div>
+    </footer>
+
+    <script type="module" src="./leaderboard.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+</body>
+</html>

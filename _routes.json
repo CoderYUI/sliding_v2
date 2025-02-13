@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": ["/images/*", "/_headers", "/_routes.json"],
+  "routes": [
+    {
+      "src": "/images/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "dest": "/images/$1"
+    },
+    {
+      "src": "/registration",
+      "dest": "/registration.html"
+    },
+    {
+      "src": "/registration.html",
+      "dest": "/registration.html"
+    },
+    {
+      "src": "/admin",
+      "dest": "/admin.html"
+    },
+    {
+      "src": "/lobby",
+      "dest": "/lobby.html"
+    },
+    {
+      "src": "/puzzle[1-9][0-9]?",
+      "dest": "/puzzle$1.html"
+    },
+    {
+      "src": "/waiting",
+      "dest": "/waiting.html"
+    },
+    {
+      "src": "/waiting_leaderboard",
+      "dest": "/waiting_leaderboard.html"
+    },
+    {
+      "src": "/thankyou",
+      "dest": "/thankyou.html"
+    },
+    {
+      "src": "/leaderboard",
+      "dest": "/leaderboard.html"
+    },
+    {
+      "src": "/(.*).js",
+      "dest": "/$1.js"
+    },
+    {
+      "src": "/(.*).css",
+      "dest": "/$1.css"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

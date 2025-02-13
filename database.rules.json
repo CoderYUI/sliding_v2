@@ -1,0 +1,118 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": true,  
+    "puzzles": {
+      ".read": true,
+      ".write": true,
+      "$puzzleId": {
+        ".validate": "newData.hasChildren(['puzzleNumber', 'name', 'image', 'active'])",
+        "puzzleNumber": { ".validate": "newData.isNumber() && newData.val() > 0" },
+        "name": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "image": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "active": { ".validate": "newData.isBoolean()" },
+        "createdAt": { ".validate": "newData.isString() && newData.val().length > 0" }
+      }
+    },
+    "lobby": {
+      ".read": true,
+      ".write": true,
+      "$playerId": {
+        ".validate": true,
+        ".indexOn": ["lastActive"]
+      }
+    },
+    "persistentSessions": {
+      ".read": true,
+      ".write": true,
+      "$sessionId": {
+        ".validate": "newData.hasChildren(['playerId', 'timestamp'])"
+      }
+    },
+    "gameState": {
+      ".read": true,
+      ".write": true,
+      ".validate": true,  
+      "$child": {
+        ".validate": true
+      },
+      "started": {
+        ".validate": "newData.isBoolean()"
+      },
+      "startTime": {
+        ".validate": "newData.isNumber() && newData.val() > 0"
+      },
+      "timeLimit": {
+        ".validate": "newData.isNumber() && newData.val() > 0"
+      },
+      "puzzleNumber": {
+        ".validate": "newData.isNumber() && newData.val() > 0"
+      }
+    },
+    "systemState": {
+      ".read": true,
+      ".write": true,
+      "reset": {
+        ".write": true,
+        ".validate": true  
+      },
+      "registration": {
+        ".write": true
+      }
+    },
+    "puzzleStates": {
+      ".read": true,
+      ".write": true,
+      ".validate": true,  
+      "$playerId": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChild('tiles') && newData.hasChild('moves') && newData.hasChild('gameStarted') && newData.hasChild('timestamp')",
+        "tiles": {
+          ".validate": "newData.hasChildren()"
+        },
+        "moves": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "gameStarted": {
+          ".validate": "newData.isBoolean()"
+        },
+        "startTime": {
+          ".validate": "newData.isNumber()"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber()"
+        },
+        "gameStartTime": {
+          ".validate": "newData.isNumber() && newData.val() > 0"
+        },
+        "timeLimit": {
+          ".validate": "newData.isNumber() && newData.val() > 0"
+        },
+        "playerName": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        }
+      }
+    },
+    "leaderboard": {
+      ".read": false,
+      ".write": false
+    },
+    "currentPuzzle": {
+      ".read": true,
+      ".write": true,
+      "puzzleNumber": { ".validate": "newData.isNumber() && newData.val() > 0" },
+      "generatedAt": { ".validate": "newData.isNumber()" }
+    },
+    "players": {
+      ".read": true,
+      ".write": true,
+      "$playerId": {
+        ".validate": "newData.hasChild('name') || newData.hasChild('avatar') || newData.hasChild('lastGameTimestamp')",
+        "name": { ".validate": "newData.isString()" },
+        "avatar": { ".validate": "newData.isString()" },
+        "lastGameTimestamp": { ".validate": "newData.isNumber()" }
+      }
+    }
+  }
+}
