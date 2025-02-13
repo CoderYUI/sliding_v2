@@ -2,7 +2,7 @@ import firebase from 'firebase/compat/app';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/', // Updated for Cloudflare compatibility
+  base: process.env.CF_PAGES ? '/' : './',
   server: {
     port: 3000,
     host: '0.0.0.0', // Allow external access
@@ -42,7 +42,8 @@ export default defineConfig({
     },
     copyPublicDir: true,
     chunkSizeWarningLimit: 600,
-    target: 'esnext' // Optimized for modern browsers
+    target: 'esnext',
+    sourcemap: true // Add source maps for better debugging
   },
   publicDir: 'public'
 });

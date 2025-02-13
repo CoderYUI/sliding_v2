@@ -1,18 +1,18 @@
-name = "sliding-puzzle-platform"
-main = "dist/worker.js"
+name = "slidingpuzzle"
 compatibility_date = "2023-01-01"
 
 [site]
 bucket = "./dist"
-entry-point = "workers-site"
 
-[env.production]
-vars = { 
-  FIREBASE_API_KEY = "AIzaSyAPQR-qVqnzAcFTfx3M1NXe_2q2xk2l1cE",
-  FIREBASE_AUTH_DOMAIN = "slide-9c643.firebaseapp.com",
-  FIREBASE_PROJECT_ID = "slide-9c643",
-  FIREBASE_STORAGE_BUCKET = "slide-9c643.firebasestorage.app",
-  FIREBASE_MESSAGING_SENDER_ID = "414316100582",
-  FIREBASE_APP_ID = "1:414316100582:web:83cf8fe4959da2c30bf427",
-  FIREBASE_DATABASE_URL = "https://slide-9c643-default-rtdb.asia-southeast1.firebasedatabase.app/"
-}
+# Add this new section for Pages
+[pages]
+pages_build_output_dir = "dist"
+
+[vars]
+FIREBASE_API_KEY = "AIzaSyAPQR-qVqnzAcFTfx3M1NXe_2q2xk2l1cE"
+FIREBASE_AUTH_DOMAIN = "slide-9c643.firebaseapp.com"
+FIREBASE_PROJECT_ID = "slide-9c643"
+FIREBASE_STORAGE_BUCKET = "slide-9c643.firebasestorage.app"
+FIREBASE_MESSAGING_SENDER_ID = "414316100582"
+FIREBASE_APP_ID = "1:414316100582:web:83cf8fe4959da2c30bf427"
+FIREBASE_DATABASE_URL = "https://slide-9c643-default-rtdb.asia-southeast1.firebasedatabase.app/"
