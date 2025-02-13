@@ -200,6 +200,9 @@ body {
     box-shadow: none;
     transform-origin: center;
     transform: translateZ(0);
+    transition: transform 0.2s ease;
+    will-change: transform;
+    contain: layout style paint;
 }
 
 .tile.has-image {
@@ -2137,5 +2140,35 @@ body.dark-theme .tile::after {
     .modal-overlay {
         padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     }
+}
+
+/* Add Styles for Network Status */
+.network-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add low-bandwidth optimized styles */
+.tile.moving {
+    transition: none;  /* Disable animations when moving for better performance */
+}
+
+/* Optimize paint operations */
+.board {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 

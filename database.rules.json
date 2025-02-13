@@ -58,6 +58,16 @@
       },
       "registration": {
         ".write": true
+      },
+      "playerRedirect": {
+        "$playerId": {
+          ".read": true,
+          ".write": true
+        }
+      },
+      "globalRedirect": {
+        ".read": true,
+        ".write": true
       }
     },
     "puzzleStates": {
@@ -111,7 +121,13 @@
         ".validate": "newData.hasChild('name') || newData.hasChild('avatar') || newData.hasChild('lastGameTimestamp')",
         "name": { ".validate": "newData.isString()" },
         "avatar": { ".validate": "newData.isString()" },
-        "lastGameTimestamp": { ".validate": "newData.isNumber()" }
+        "lastGameTimestamp": { ".validate": "newData.isNumber()" },
+        ".read": true,
+        ".write": true,
+        "forceEnd": {
+          ".read": true,
+          ".write": true
+        }
       }
     }
   }

@@ -26,6 +26,7 @@ class LobbyManager {
 
         // Initialize lobby immediately
         this.initLobby();
+        this.setupPlayerRedirectListener();
     }
 
     async initLobby() {
@@ -524,6 +525,71 @@ class LobbyManager {
             const playerRef = ref(realtimeDb, `lobby/${this.playerId}`);
             set(playerRef, null);
         }
+    }
+
+    setupPlayerRedirectListener() {
+        // Listen for kick messages
+        const kickMessageRef = ref(realtimeDb, `systemState/kickMessage/${this.playerId}`);
+        onValue(kickMessageRef, (snapshot) => {
+            const kickData = snapshot.val();
+            if (kickData) {
+                this.showKickMessage(kickData.message);
+            }
+        });
+
+        // Listen for redirects
+        const redirectRef = ref(realtimeDb, `systemState/playerRedirect/${this.playerId}`);
+        onValue(redirectRef, (snapshot) => {
+            const redirectData = snapshot.val();
+            if (redirectData?.destination === 'thankyou.html') {
+                // Clear player data before redirect
+                this.cleanup();
+                window.location.href = 'thankyou.html';
+            }
+        });
+    }
+
+    showKickMessage(message) {
+        const modal = document.createElement('div');
+        modal.className = 'kick-modal';
+        modal.innerHTML = `
+            <div class="kick-content">
+                <h2>Notice</h2>
+                <p>${message}</p>
+                <p>Redirecting you in a few seconds...</p>
+            </div>
+        `;
+
+        // Add styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .kick-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            }
+            .kick-content {
+                background: white;
+                padding: 2rem;
+                border-radius: 8px;
+                text-align: center;
+                max-width: 400px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            }
+            .kick-content h2 {
+                color: #ff4444;
+                margin-bottom: 1rem;
+            }
+        `;
+        document.head.appendChild(style);
+        document.body.appendChild(modal);
     }
 }
 

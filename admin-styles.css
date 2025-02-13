@@ -485,3 +485,26 @@
 #publishLeaderboard:hover {
     background-color: #45a049;
 }
+
+.force-action {
+    background-color: #dc3545;
+    color: white;
+}
+
+.force-action:hover {
+    background-color: #c82333;
+}
+
+.remove-player-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.remove-player-btn:hover {
+    background-color: #c82333;
+}

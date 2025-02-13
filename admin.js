@@ -20,6 +20,7 @@ class AdminPanel {
         this.lastKnownLeaderboardId = sessionStorage.getItem('lastLeaderboardId');
         this.restorePlayerNames();
         this.restoreLeaderboardButtons();
+        this.setupAdminControls();
     }
 
     async restoreAdminState() {
@@ -212,6 +213,9 @@ class AdminPanel {
             const statusClass = this.getStatusClass(player.status);
             const statusText = this.getStatusText(player.status);
 
+            // Add remove button
+            const removeButton = `<button class="remove-player-btn" onclick="window._adminPanel.removePlayer('${id}')">Remove</button>`;
+
             let details = '';
             if (player.status === 'completed') {
                 details = `<div class="player-details">
@@ -224,6 +228,7 @@ class AdminPanel {
                 <div class="player-info">
                     <span class="player-name">${player.name}</span>
                     <span class="player-status ${statusClass}">${statusText}</span>
+                    ${removeButton}
                 </div>
                 ${details}
             `;
@@ -661,8 +666,18 @@ class AdminPanel {
         `;
     }
 
-    async publishLeaderboard() {
+    async publishLeaderboard(force = false) {
         try {
+            const gameStateRef = ref(realtimeDb, 'gameState');
+            const gameStateSnap = await get(gameStateRef);
+            const gameState = gameStateSnap.val();
+
+            if (!force && gameState?.completedPlayers < gameState?.totalPlayers) {
+                if (!confirm('Not all players have completed. Force publish anyway?')) {
+                    return;
+                }
+            }
+
             const leaderboardId = Date.now().toString();
             
             await this.withRetry(async () => {
@@ -1141,71 +1156,7 @@ class AdminPanel {
             downloadBtn.id = 'downloadLeaderboard';
             downloadBtn.className = 'admin-button';
             downloadBtn.textContent = 'Download Leaderboard';
-            downloadBtn.onclick = async () => {
-                try {
-                    const completionsSnapshot = await getDocs(collection(db, 'completions'));
-                    const players = [];
-                    
-                    completionsSnapshot.forEach(doc => {
-                        const completion = doc.data();
-                        const tilesCorrect = completion.status === 'timeout' 
-                            ? (completion.timeoutProgress?.tilesCorrect || completion.tilesCorrect || 0)
-                            : 11;
-
-                        players.push({
-                            id: doc.id,
-                            name: completion.name,
-                            status: completion.status,
-                            time: completion.time,
-                            moves: completion.moves || 0,
-                            points: completion.status === 'completed' ? 10 : 0,
-                            accuracy: completion.status === 'completed' ? 100 : Math.round((tilesCorrect / 11) * 100),
-                            timeoutProgress: {
-                                tilesCorrect: tilesCorrect,
-                                totalTiles: 11
-                            }
-                        });
-                    });
-
-                    // Sort players using the same logic as before
-                    const completed = players.filter(p => p.status === 'completed');
-                    const timeout = players.filter(p => p.status === 'timeout');
-                    const rankedCompleted = completed.sort((a, b) => {
-                        if (a.time !== b.time) return a.time - b.time;
-                        return a.moves - b.moves;
-                    });
-                    const rankedTimeout = timeout.sort((a, b) => {
-                        const aTiles = a.timeoutProgress?.tilesCorrect || 0;
-                        const bTiles = b.timeoutProgress?.tilesCorrect || 0;
-                        if (aTiles !== bTiles) return bTiles - aTiles;
-                        return a.moves - b.moves;
-                    });
-                    const rankedPlayers = [...rankedCompleted, ...rankedTimeout];
-
-                    // Generate Excel file
-                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                    const filename = `puzzle_leaderboard_${timestamp}.xlsx`;
-                    
-                    const worksheet = XLSX.utils.json_to_sheet(rankedPlayers.map((player, index) => ({
-                        Rank: index + 1,
-                        Team_Name: player.name,
-                        Status: player.status,
-                        Time_Progress: player.status === 'completed' 
-                            ? this.formatTime(player.time) 
-                            : `Timeout (${player.timeoutProgress.tilesCorrect}/11 tiles)`,
-                        Moves: player.moves,
-                        Accuracy: `${player.accuracy}%`,
-                        Points: player.points
-                    })));
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, "Leaderboard");
-                    
-                    XLSX.writeFile(workbook, filename);
-                } catch (error) {
-                    console.error('Error downloading leaderboard:', error);
-                    this.showStatusMessage('Error downloading leaderboard', true);
-                }
-            };
+            downloadBtn.onclick = () => this.downloadLeaderboard();
             
             // Insert download button after publish button
             if (publishButton) {
@@ -1213,6 +1164,273 @@ class AdminPanel {
             } else {
                 controlPanel.appendChild(downloadBtn);
             }
+        }
+    }
+
+    async downloadLeaderboard() {
+        try {
+            const completionsSnapshot = await getDocs(collection(db, 'completions'));
+            const players = [];
+            
+            completionsSnapshot.forEach(doc => {
+                const completion = doc.data();
+                const tilesCorrect = completion.status === 'timeout' 
+                    ? (completion.timeoutProgress?.tilesCorrect || completion.tilesCorrect || 0)
+                    : 11;
+
+                players.push({
+                    id: doc.id,
+                    name: completion.name,
+                    status: completion.status,
+                    time: completion.time,
+                    moves: completion.moves || 0,
+                    points: completion.status === 'completed' ? 10 : 0,
+                    accuracy: completion.status === 'completed' ? 100 : Math.round((tilesCorrect / 11) * 100)
+                });
+            });
+
+            // Generate Excel file
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `puzzle_leaderboard_${timestamp}.xlsx`;
+            
+            const worksheet = XLSX.utils.json_to_sheet(this.formatPlayersForExcel(players));
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Leaderboard");
+            
+            XLSX.writeFile(workbook, filename);
+        } catch (error) {
+            console.error('Error downloading leaderboard:', error);
+            this.showStatusMessage('Error downloading leaderboard', true);
+        }
+    }
+
+    formatPlayersForExcel(players) {
+        // Sort players by status and performance
+        const completed = players.filter(p => p.status === 'completed');
+        const timeout = players.filter(p => p.status === 'timeout');
+        
+        const rankedCompleted = completed.sort((a, b) => {
+            if (a.time !== b.time) return a.time - b.time;
+            return a.moves - b.moves;
+        });
+
+        const rankedTimeout = timeout.sort((a, b) => {
+            const aTiles = a.timeoutProgress?.tilesCorrect || 0;
+            const bTiles = b.timeoutProgress?.tilesCorrect || 0;
+            if (aTiles !== bTiles) return bTiles - aTiles;
+            return a.moves - b.moves;
+        });
+
+        const rankedPlayers = [...rankedCompleted, ...rankedTimeout];
+
+        return rankedPlayers.map((player, index) => ({
+            Rank: index + 1,
+            Team_Name: player.name,
+            Status: player.status,
+            Time_Progress: player.status === 'completed' 
+                ? this.formatTime(player.time) 
+                : `Timeout (${player.timeoutProgress?.tilesCorrect || 0}/11 tiles)`,
+            Moves: player.moves,
+            Accuracy: `${player.accuracy}%`,
+            Points: player.points
+        }));
+    }
+
+    setupAdminControls() {
+        const controlPanel = document.querySelector('.control-panel');
+        
+        // Add Force Publish button
+        const forcePublishBtn = document.createElement('button');
+        forcePublishBtn.id = 'forcePublishLeaderboard';
+        forcePublishBtn.className = 'admin-button force-action';
+        forcePublishBtn.textContent = 'Force Publish Leaderboard';
+        forcePublishBtn.onclick = () => this.forcePublishLeaderboard();
+        controlPanel.appendChild(forcePublishBtn);
+
+        // Add Push to Puzzle button
+        const pushToPuzzleBtn = document.createElement('button');
+        pushToPuzzleBtn.id = 'pushToPuzzle';
+        pushToPuzzleBtn.className = 'admin-button warning-action';
+        pushToPuzzleBtn.textContent = 'Push Lobby Players to Puzzle';
+        pushToPuzzleBtn.onclick = () => this.pushLobbyPlayersToPuzzle();
+        controlPanel.appendChild(pushToPuzzleBtn);
+    }
+
+    async pushLobbyPlayersToPuzzle() {
+        try {
+            // Get current game state to ensure game has started
+            const gameStateRef = ref(realtimeDb, 'gameState');
+            const gameStateSnap = await get(gameStateRef);
+            const gameState = gameStateSnap.val();
+
+            if (!gameState?.started) {
+                this.showStatusMessage('Game has not started yet!', true);
+                return;
+            }
+
+            // Get all stalled players from different sources
+            const stalledPlayers = new Map();
+
+            // Check lobby players
+            Object.entries(this.lobbyPlayers || {}).forEach(([id, player]) => {
+                if (!this.activePlayers[id] && !this.firestoreCompletions[id]) {
+                    stalledPlayers.set(id, { 
+                        ...player, 
+                        status: 'inlobby',
+                        source: 'lobby'
+                    });
+                }
+            });
+
+            // Check registered players who might be stuck
+            const playersRef = ref(realtimeDb, 'players');
+            const playersSnap = await get(playersRef);
+            const registeredPlayers = playersSnap.val() || {};
+
+            Object.entries(registeredPlayers).forEach(([id, player]) => {
+                if (!stalledPlayers.has(id) && 
+                    !this.activePlayers[id] && 
+                    !this.firestoreCompletions[id]) {
+                    stalledPlayers.set(id, {
+                        ...player,
+                        status: 'unknown',
+                        source: 'registered'
+                    });
+                }
+            });
+
+            if (stalledPlayers.size === 0) {
+                this.showStatusMessage('No stalled players found', true);
+                return;
+            }
+
+            // Create a detailed confirmation message
+            const lobbyCount = Array.from(stalledPlayers.values())
+                .filter(p => p.source === 'lobby').length;
+            const unknownCount = Array.from(stalledPlayers.values())
+                .filter(p => p.source === 'registered').length;
+            
+            const confirmMessage = 
+                `Found ${stalledPlayers.size} stalled player(s):\n` +
+                `- ${lobbyCount} in lobby\n` +
+                `- ${unknownCount} in unknown state\n\n` +
+                `Push them to the puzzle page?`;
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            // Push all stalled players to puzzle
+            for (const [playerId, player] of stalledPlayers) {
+                // Set their game session data
+                const playerSessionData = {
+                    fromLobby: true,
+                    gameStarted: true,
+                    puzzleNumber: gameState.puzzleNumber,
+                    personalStartTime: Date.now()
+                };
+
+                // Store their session data
+                await set(ref(realtimeDb, `players/${playerId}/sessionData`), playerSessionData);
+
+                // Send redirect command
+                await set(ref(realtimeDb, `systemState/playerRedirect/${playerId}`), {
+                    timestamp: Date.now(),
+                    destination: `/puzzle${gameState.puzzleNumber}.html`,
+                    reason: 'admin_push',
+                    sessionData: playerSessionData
+                });
+            }
+
+            const message = 
+                `Pushed ${stalledPlayers.size} player(s) to puzzle page:\n` +
+                `${lobbyCount} from lobby, ${unknownCount} from unknown state`;
+            this.showStatusMessage(message);
+
+        } catch (error) {
+            console.error('Error pushing players to puzzle:', error);
+            this.showStatusMessage('Failed to push players to puzzle', true);
+        }
+    }
+
+    async removePlayer(playerId) {
+        if (!confirm('Are you sure you want to remove this player?')) return;
+
+        try {
+            // First, notify the player to leave
+            await set(ref(realtimeDb, `systemState/playerRedirect/${playerId}`), {
+                timestamp: Date.now(),
+                destination: 'thankyou.html',
+                reason: 'removed_by_admin',
+                forceRemove: true
+            });
+
+            // Force end their game session
+            await set(ref(realtimeDb, `players/${playerId}/forceEnd`), {
+                timestamp: Date.now(),
+                reason: 'removed_by_admin'
+            });
+
+            // Clear their puzzle state
+            await set(ref(realtimeDb, `puzzleStates/${playerId}`), null);
+            
+            // Remove from lobby
+            await set(ref(realtimeDb, `lobby/${playerId}`), null);
+
+            // Update total player count if game is active
+            const gameStateRef = ref(realtimeDb, 'gameState');
+            const gameStateSnap = await get(gameStateRef);
+            const gameState = gameStateSnap.val();
+
+            if (gameState?.totalPlayers) {
+                const newTotal = Math.max(0, gameState.totalPlayers - 1);
+                await set(ref(realtimeDb, 'gameState/totalPlayers'), newTotal);
+                
+                if (gameState.completedPlayers) {
+                    this.updateCompletionStatus(gameState.completedPlayers, newTotal);
+                }
+            }
+
+            this.showStatusMessage(`Player ${playerId} has been removed`);
+
+        } catch (error) {
+            console.error('Error removing player:', error);
+            this.showStatusMessage('Failed to remove player', true);
+        }
+    }
+
+    async forcePublishLeaderboard() {
+        if (!confirm('Are you sure you want to force publish the leaderboard? This will end the game for all remaining players.')) return;
+
+        try {
+            // First force all active players to stop
+            const puzzleStatesRef = ref(realtimeDb, 'puzzleStates');
+            const puzzleStatesSnap = await get(puzzleStatesRef);
+            const activePlayers = puzzleStatesSnap.val() || {};
+
+            // Force end all active games
+            const forceEndPromises = Object.keys(activePlayers).map(playerId => 
+                set(ref(realtimeDb, `players/${playerId}/forceEnd`), {
+                    timestamp: Date.now(),
+                    reason: 'force_publish'
+                })
+            );
+
+            await Promise.all(forceEndPromises);
+
+            // Send global redirect signal
+            await set(ref(realtimeDb, 'systemState/globalRedirect'), {
+                timestamp: Date.now(),
+                destination: 'leaderboard.html',
+                reason: 'force_publish'
+            });
+
+            // Continue with existing leaderboard publication
+            await this.publishLeaderboard(true);
+
+        } catch (error) {
+            console.error('Error force publishing leaderboard:', error);
+            this.showStatusMessage('Failed to force publish leaderboard', true);
         }
     }
 }

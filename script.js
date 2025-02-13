@@ -30,6 +30,10 @@ class SlidingPuzzle {
 
         // Initialize game with fresh state
         this.initializeGame();
+        this.offlineQueue = [];
+        this.lastSyncTime = Date.now();
+        this.syncInterval = 5000; // Sync every 5 seconds
+        this.setupOfflineSupport();
     }
 
     checkSession() {
@@ -145,10 +149,15 @@ class SlidingPuzzle {
                 throw new Error('Required elements not found');
             }
 
-            // Use original puzzle number if available
-            if (this.puzzleNumber) {
-                await this.initializePuzzleData(this.puzzleNumber);
-                return;
+            // Get the puzzle URL from session storage
+            const puzzleUrl = sessionStorage.getItem('puzzleReturnUrl');
+            if (puzzleUrl) {
+                const urlMatch = puzzleUrl.match(/puzzle(\d+)\.html/);
+                if (urlMatch) {
+                    this.puzzleNumber = parseInt(urlMatch[1]);
+                    this.initializePuzzleData(this.puzzleNumber);
+                    return;
+                }
             }
 
             // Fallback to game state puzzle number
@@ -158,7 +167,7 @@ class SlidingPuzzle {
                 return;
             }
 
-            await this.initializePuzzleData(gameState.puzzleNumber);
+            this.initializePuzzleData(gameState.puzzleNumber);
         } catch (error) {
             console.error('Error initializing puzzle:', error);
             window.location.href = '/';
@@ -982,7 +991,7 @@ class SlidingPuzzle {
             }
 
             try {
-                // Ensure we have a valid document reference
+                // Save to Firestore
                 const docRef = doc(db, 'completions', playerId);
                 await setDoc(docRef, completionData);
                 savedSuccessfully = true;
@@ -1000,85 +1009,110 @@ class SlidingPuzzle {
                 status: 'completed'
             }));
 
-            // Show success modal with updated styling
-            const successModal = document.getElementById('successModal');
-            if (successModal) {
-                const modalContent = `
-                    <div class="completion-modal">
-                        <h2 class="completion-title">Congrats, You made it in time!</h2>
-                        <div class="completion-details">
-                            <p class="time-display">Time: ${this.formatTime(timeTaken)}</p>
-                            <p class="moves-display">Moves: ${this.moves}</p>
-                        </div>
-                        <div class="completed-image-container">
-                            <img src="${this.imagePath}" alt="Completed Puzzle" 
-                                 style="width: 400px; height: 300px; object-fit: cover; border: 3px solid #ffd700; border-radius: 8px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);">
-                        </div>
-                    </div>
-                `;
-                
-                successModal.innerHTML = modalContent;
-                successModal.style.display = 'flex';
-                successModal.classList.add('active');
-
-                // Add these styles dynamically
-                const style = document.createElement('style');
-                style.textContent = `
-                    .completion-modal {
-                        text-align: center;
-                        padding: 2rem;
-                        background: white;
-                        border-radius: 12px;
-                        box-shadow: 0 0 20px rgba(0,0,0,0.2);
-                    }
-                    .completion-title {
-                        font-family: 'Russo One', sans-serif;
-                        font-size: 2rem;
-                        color: #ffd700;
-                        margin-bottom: 1.5rem;
-                        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-                    }
-                    .completion-details {
-                        font-family: 'Press Start 2P', cursive;
-                        margin: 1.5rem 0;
-                        font-size: 1.2rem;
-                        color: #333;
-                    }
-                    .time-display, .moves-display {
-                        margin: 0.5rem 0;
-                    }
-                    .completed-image-container {
-                        margin: 1rem 0;
-                        padding: 10px;
-                        background: #fff;
-                        display: inline-block;
-                    }
-                `;
-                document.head.appendChild(style);
-
-                setTimeout(() => {
-                    successModal.classList.remove('active');
-                    window.location.href = 'waiting.html';
-                }, 3000);
-            }
+            // Show completion modal
+            this.showCompletionScreen({
+                time: timeTaken,
+                moves: this.moves,
+                image: this.imagePath
+            });
 
         } catch (error) {
-            console.error('Fatal error in handleWin:', error);
-            // Ensure we at least store completion locally
-            const completionData = {
-                time: Date.now() - this.gameStartTime,
-                moves: this.moves,
-                status: 'completed',
-                error: error.message
-            };
-            sessionStorage.setItem('completionData', JSON.stringify(completionData));
-            this.showCompletionMessage(completionData.time, false);
-            
-            // Still redirect to waiting page
-            setTimeout(() => {
-                window.location.href = 'waiting.html';
-            }, 3000);
+            console.error('Error in handleWin:', error);
+            // Fallback to simple completion message
+            alert(`Congratulations! You completed the puzzle in ${this.formatTime(Date.now() - this.gameStartTime)}`);
+            window.location.href = 'waiting.html';
         }
+    }
+
+    showCompletionScreen(data) {
+        const modal = document.createElement('div');
+        modal.className = 'completion-modal';
+        modal.innerHTML = `
+            <div class="completion-content">
+                <h2>Congratulations!</h2>
+                <div class="stats">
+                    <p>Time: ${this.formatTime(data.time)}</p>
+                    <p>Moves: ${data.moves}</p>
+                </div>
+                <div class="completed-puzzle-image">
+                    <img src="${data.image}" alt="Completed Puzzle">
+                </div>
+                <p class="waiting-message">Please wait for other players to finish.</p>
+                <p class="instruction">The admin will display the leaderboard when everyone is done.</p>
+                <button onclick="window.location.href='waiting.html'" class="continue-btn">
+                    Continue to Waiting Room
+                </button>
+            </div>
+        `;
+
+        // Add styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .completion-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
+            .completion-content {
+                background: white;
+                padding: 2rem;
+                border-radius: 12px;
+                text-align: center;
+                max-width: 600px;
+                width: 90%;
+            }
+            .completion-content h2 {
+                color: #4CAF50;
+                font-size: 2rem;
+                margin-bottom: 1rem;
+            }
+            .stats {
+                margin: 1rem 0;
+                font-size: 1.2rem;
+            }
+            .completed-puzzle-image {
+                margin: 1.5rem 0;
+                border: 3px solid #4CAF50;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .completed-puzzle-image img {
+                max-width: 100%;
+                height: auto;
+            }
+            .waiting-message {
+                color: #666;
+                margin: 1rem 0;
+            }
+            .instruction {
+                color: #999;
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+            }
+            .continue-btn {
+                background: #4CAF50;
+                color: white;
+                border: none;
+                padding: 0.8rem 1.5rem;
+                border-radius: 25px;
+                font-size: 1.1rem;
+                cursor: pointer;
+                transition: background 0.3s;
+            }
+            .continue-btn:hover {
+                background: #45a049;
+            }
+        `;
+
+        document.head.appendChild(style);
+        document.body.appendChild(modal);
     }
 
     async showLeaderboard() {
@@ -1179,17 +1213,63 @@ class SlidingPuzzle {
     }
 
     setupResetListener() {
-        const resetRef = ref(realtimeDb, 'systemState/reset');
-        onValue(resetRef, (snapshot) => {
-            const resetData = snapshot.val();
-            if (resetData?.action === 'reset') {
-                // Clear all device data if fullClean is true
-                if (resetData.fullClean) {
-                    this.clearAllLocalData();
-                }
-                window.location.replace('/thankyou.html');
+        if (!this.playerId) return;
+
+        // Listen for force end
+        const forceEndRef = ref(realtimeDb, `players/${this.playerId}/forceEnd`);
+        onValue(forceEndRef, (snapshot) => {
+            const forceEndData = snapshot.val();
+            if (forceEndData) {
+                console.log('Force end detected:', forceEndData);
+                this.handleForceEnd(forceEndData.reason);
             }
         });
+
+        // Listen for global redirects
+        const globalRedirectRef = ref(realtimeDb, 'systemState/globalRedirect');
+        onValue(globalRedirectRef, (snapshot) => {
+            const redirectData = snapshot.val();
+            if (redirectData?.timestamp > (this.lastRedirectTime || 0)) {
+                this.lastRedirectTime = redirectData.timestamp;
+                this.handleRedirect(redirectData);
+            }
+        });
+
+        // Listen for player-specific redirects
+        const playerRedirectRef = ref(realtimeDb, `systemState/playerRedirect/${this.playerId}`);
+        onValue(playerRedirectRef, (snapshot) => {
+            const redirectData = snapshot.val();
+            if (redirectData?.timestamp > (this.lastPlayerRedirectTime || 0)) {
+                this.lastPlayerRedirectTime = redirectData.timestamp;
+                if (redirectData.forceRemove) {
+                    this.handleForceEnd('removed');
+                }
+                this.handleRedirect(redirectData);
+            }
+        });
+    }
+
+    handleForceEnd(reason) {
+        // Stop the game
+        this.gameStarted = false;
+        clearInterval(this.timerInterval);
+        
+        // Clear game state
+        this.cleanup();
+        sessionStorage.clear();
+        localStorage.removeItem('puzzleState_' + this.playerId);
+        
+        console.log('Game forcefully ended:', reason);
+    }
+
+    handleRedirect(redirectData) {
+        if (!redirectData?.destination) return;
+        
+        // Save any necessary state before redirect
+        this.cleanup();
+        
+        // Redirect to specified page
+        window.location.href = redirectData.destination;
     }
 
     clearAllLocalData() {
@@ -1296,42 +1376,23 @@ class SlidingPuzzle {
             imagePath: this.imagePath // Save image path
         };
 
+        // Always save to local storage first
+        localStorage.setItem(`puzzleState_${this.playerId}`, JSON.stringify(stateData));
+
+        if (this.isOffline) {
+            // Add to offline queue if not connected
+            this.offlineQueue.push(stateData);
+            return;
+        }
+
         try {
-            // Validate data before saving
-            if (!stateData.tiles.length || !stateData.playerName) {
-                console.error('Invalid state data:', stateData);
-                return;
-            }
-
-            // Save to Firebase
-            const stateRef = ref(realtimeDb, `puzzleStates/${this.playerId}`);
-            await set(stateRef, stateData);
+            await set(ref(realtimeDb, `puzzleStates/${this.playerId}`), stateData);
             console.log('State saved to Firebase:', stateData);
-
-            // Save to session storage
-            sessionStorage.setItem('puzzleState', JSON.stringify(stateData));
-            sessionStorage.setItem('gameStartTime', stateData.gameStartTime.toString());
-            sessionStorage.setItem('gameTimeLimit', stateData.timeLimit.toString());
-            sessionStorage.setItem('gameStarted', 'true');
-            sessionStorage.setItem('imagePath', stateData.imagePath); // Save image path to session
-
-            // Also save session data
-            const sessionData = {
-                playerName: this.playerName,
-                playerId: this.playerId,
-                gameStarted: 'true',
-                timestamp: Date.now()
-            };
-
-            localStorage.setItem('puzzleSession', JSON.stringify({
-                timestamp: Date.now(),
-                data: sessionData
-            }));
         } catch (error) {
-            console.error('Failed to save state:', error);
-            // Fallback to session storage only
-            sessionStorage.setItem('puzzleState', JSON.stringify(stateData));
-            sessionStorage.setItem('imagePath', stateData.imagePath);
+            console.error('Error saving state:', error);
+            // Add to offline queue if save fails
+            this.offlineQueue.push(stateData);
+            this.handleOffline();
         }
     }
 
@@ -1553,6 +1614,98 @@ class SlidingPuzzle {
     
         // Redirect to appropriate page
         window.location.href = isTimeout ? 'waiting_leaderboard.html' : 'waiting.html';
+    }
+
+    setupOfflineSupport() {
+        // Listen for online/offline events
+        window.addEventListener('online', () => this.handleOnline());
+        window.addEventListener('offline', () => this.handleOffline());
+        
+        // Set up periodic state sync
+        setInterval(() => this.attemptStateSync(), this.syncInterval);
+    }
+
+    handleOffline() {
+        console.log('Connection lost - entering offline mode');
+        this.isOffline = true;
+        this.showNetworkStatus('Offline Mode - Your progress will be saved');
+    }
+
+    async handleOnline() {
+        console.log('Connection restored - syncing state');
+        this.isOffline = false;
+        this.showNetworkStatus('Connection Restored - Syncing...');
+        await this.syncOfflineChanges();
+        this.showNetworkStatus('Synced!', true);
+    }
+
+    async syncOfflineChanges() {
+        if (this.offlineQueue.length === 0) return;
+
+        try {
+            // Process offline queue in order
+            for (const state of this.offlineQueue) {
+                if (!this.playerId) continue;
+
+                await set(ref(realtimeDb, `puzzleStates/${this.playerId}`), {
+                    ...state,
+                    syncedAt: Date.now()
+                });
+            }
+
+            // Clear queue after successful sync
+            this.offlineQueue = [];
+            console.log('Offline changes synced successfully');
+        } catch (error) {
+            console.error('Error syncing offline changes:', error);
+            // Keep changes in queue if sync fails
+        }
+    }
+
+    async attemptStateSync() {
+        if (this.isOffline || !this.gameStarted) return;
+        
+        try {
+            const currentState = {
+                tiles: this.tiles,
+                moves: this.moves,
+                gameStarted: this.gameStarted,
+                gameStartTime: this.gameStartTime,
+                timeLimit: this.timeLimit,
+                timestamp: Date.now(),
+                playerName: this.playerName,
+                puzzleNumber: this.getPuzzleNumberFromUrl(),
+                imagePath: this.imagePath
+            };
+
+            // Only sync if state has changed
+            if (JSON.stringify(this.lastSyncedState) !== JSON.stringify(currentState)) {
+                await set(ref(realtimeDb, `puzzleStates/${this.playerId}`), currentState);
+                this.lastSyncedState = currentState;
+                console.log('State synced successfully');
+            }
+        } catch (error) {
+            console.warn('Sync attempt failed:', error);
+            if (!navigator.onLine) {
+                this.handleOffline();
+            }
+        }
+    }
+
+    showNetworkStatus(message, autoHide = false) {
+        const existingStatus = document.querySelector('.network-status');
+        if (existingStatus) {
+            existingStatus.remove();
+        }
+
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'network-status';
+        statusDiv.textContent = message;
+        document.body.appendChild(statusDiv);
+
+        if (autoHide) {
+            setTimeout(() => statusDiv.remove(), 3000);
+        }
     }
 }
 
