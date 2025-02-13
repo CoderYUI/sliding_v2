@@ -1,5 +1,12 @@
 /*
   Cache-Control: public, max-age=31536000, immutable
+  Early-Hints: enable
+  Content-Security-Policy: upgrade-insecure-requests
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
 
 /images/*
   Cache-Control: public, max-age=31536000, immutable
+  Accept-CH: DPR, Width, Viewport-Width
+  Permissions-Policy: interest-cohort=()

@@ -36,14 +36,19 @@ export default defineConfig({
       },
       output: {
         manualChunks: {
-          firebase: ['firebase/app', 'firebase/firestore', 'firebase/database']
+          firebase: ['firebase/app', 'firebase/firestore', 'firebase/database'],
+          vendor: ['firebase/compat/app']
         }
       }
     },
     copyPublicDir: true,
     chunkSizeWarningLimit: 600,
     target: 'esnext',
-    sourcemap: true // Add source maps for better debugging
+    sourcemap: process.env.NODE_ENV === 'development',
+    minify: 'esbuild',
+    cssMinify: true,
+    cssCodeSplit: true,
+    modulePreload: true
   },
   publicDir: 'public'
 });
