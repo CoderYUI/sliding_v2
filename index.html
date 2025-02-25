@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Event Platform</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+            margin: 20px auto;
+        }
+        .button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            background-color: #3498db;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .button.admin {
+            background-color: #e74c3c;
+        }
+        .button.admin:hover {
+            background-color: #c0392b;
+        }
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .puzzle-card {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .puzzle-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .puzzle-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .puzzle-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .puzzle-button:hover {
+            background: #2980b9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .modal-content input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .modal-content button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            transition: background-color 0.2s;
+        }
+
+        .modal-content button:hover {
+            background-color: #2980b9;
+        }
+
+        .puzzle-generator {
+            margin: 40px auto;
+            padding: 20px;
+            max-width: 600px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .puzzle-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .puzzle-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        .generate-button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .generate-button:hover {
+            background: #2980b9;
+        }
+
+        .puzzle-link {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        .generate-section {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .generate-button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .generate-button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .puzzle-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .puzzle-links {
+            text-align: left;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .puzzle-links a {
+            display: block;
+            margin: 5px 0;
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .puzzle-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .qr-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            padding: 10px;
+            background: #fff;
+            border-radius: 4px;
+        }
+
+        .qr-code {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .qr-code h4 {
+            margin: 5px 0;
+            color: #666;
+        }
+    </style>
+    
+    <!-- Add QR Code library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <script>
+        // Clean storage when accessing any puzzle link directly
+        if (window.location.pathname.includes('puzzle')) {
+            // Force clean storage
+            localStorage.clear();
+            sessionStorage.clear();
+            document.cookie.split(";").forEach(cookie => {
+                document.cookie = cookie.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            // Set fresh start flag before redirect
+            sessionStorage.setItem('freshStart', 'true');
+            window.location.replace('/registration.html');
+        }
+    </script>
+    <h1>Puzzle Event Platform</h1>
+    
+    <div class="generate-section"></div>
+        <button onclick="generatePuzzle()" class="generate-button">Generate Random Puzzle</button>
+        <div id="puzzleInfo" class="puzzle-info"></div>
+    </div>
+
+    <div class="button-group">
+        <button class="button admin" onclick="showAdminModal()">Admin Panel</button>
+        <button class="button admin" onclick="clearAllData()">Clear Local Data</button>
+    </div>
+
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <h2>Enter Admin Code</h2>
+            <input type="password" id="adminCode" placeholder="Enter code">
+            <button onclick="checkAdminCode()">Submit</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { realtimeDb } from './firebase-config.js';
+        import { ref, set, get } from 'firebase/database';
+
+        const PUZZLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+        
+        function getBaseUrl() {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost') {
+                return 'http://localhost:3000';
+            } else {
+                return window.location.origin;
+            }
+        }
+
+        window.generatePuzzle = async function() {
+            const infoDiv = document.getElementById('puzzleInfo');
+            infoDiv.style.display = 'block';
+
+            try {
+                // Check for existing game data in storage
+                const hasGameData = Object.keys(localStorage).some(key => 
+                    key.includes('puzzle') || 
+                    key.includes('game') || 
+                    key.includes('player')
+                ) || Object.keys(sessionStorage).some(key => 
+                    key.includes('puzzle') || 
+                    key.includes('game') || 
+                    key.includes('player')
+                );
+
+                if (hasGameData) {
+                    infoDiv.innerHTML = `
+                        <div class="error-message" style="color: red; padding: 15px; background: #ffebee; border-radius: 4px; margin: 10px;">
+                            <h3 style="margin: 0 0 10px 0">Existing Game Data Found</h3>
+                            <p style="margin: 5px 0">Please clear local storage before generating a new puzzle.</p>
+                            <button onclick="clearAllData()" class="generate-button" style="background-color: #e74c3c; margin-top: 10px;">
+                                Clear Local Data
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Check reset state first
+                const systemStateRef = ref(realtimeDb, 'systemState');
+                const systemSnapshot = await get(systemStateRef);
+                const systemState = systemSnapshot.val() || {};
+
+                // If reset is in progress or reset action exists
+                if (systemState.reset?.action === 'reset' || 
+                    systemState.reset?.forcedReset === true) {
+                    infoDiv.innerHTML = `
+                        <div class="error-message" style="color: red; padding: 15px; background: #ffebee; border-radius: 4px; margin: 10px;">
+                            <h3 style="margin: 0 0 10px 0">System Reset in Progress</h3>
+                            <p style="margin: 5px 0">The platform is currently being reset.</p>
+                            <p style="margin: 5px 0">Please wait until the reset process is complete.</p>
+                            <p style="margin: 10px 0 0 0; font-style: italic">Try reloading the page in a few moments.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Get currently active puzzles
+                const activePuzzlesRef = ref(realtimeDb, 'activePuzzles');
+                const activePuzzlesSnapshot = await get(activePuzzlesRef);
+                const activePuzzles = activePuzzlesSnapshot.val() || {};
+
+                // Filter out recently used puzzles (last 5 minutes)
+                const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+                const availablePuzzles = PUZZLES.filter(num => 
+                    !activePuzzles[num] || activePuzzles[num].generatedAt < fiveMinutesAgo
+                );
+
+                // If all puzzles are recently used, use the least recently used one
+                let puzzleNumber;
+                if (availablePuzzles.length === 0) {
+                    const oldestPuzzle = PUZZLES.reduce((oldest, num) => {
+                        if (!activePuzzles[oldest] || (activePuzzles[num] && activePuzzles[num].generatedAt < activePuzzles[oldest].generatedAt)) {
+                            return num;
+                        }
+                        return oldest;
+                    }, PUZZLES[0]);
+                    puzzleNumber = oldestPuzzle;
+                } else {
+                    // Random selection from available puzzles
+                    puzzleNumber = availablePuzzles[Math.floor(Math.random() * availablePuzzles.length)];
+                }
+
+                // Update active puzzles
+                await set(ref(realtimeDb, `activePuzzles/${puzzleNumber}`), {
+                    generatedAt: Date.now()
+                });
+
+                // Store the current active puzzle
+                await set(ref(realtimeDb, 'currentPuzzle'), {
+                    puzzleNumber: puzzleNumber,
+                    generatedAt: Date.now(),
+                    active: true
+                });
+
+                // Clear any existing game state
+                await set(ref(realtimeDb, 'gameState'), {
+                    started: false,
+                    puzzleNumber: puzzleNumber
+                });
+
+                // Create URLs with the puzzle number
+                const baseUrl = getBaseUrl();
+                const puzzleUrl = `${baseUrl}/puzzle${puzzleNumber}.html`;
+                
+                // Store puzzle data in Realtime Database
+                const puzzleData = {
+                    puzzleNumber: puzzleNumber,
+                    name: `Puzzle ${puzzleNumber}`,
+                    image: `/images/puzzles/puzzle${puzzleNumber}.png`,
+                    active: true,
+                    createdAt: new Date().toISOString()
+                };
+
+                // Save puzzle data
+                await set(ref(realtimeDb, `puzzles/puzzle${puzzleNumber}`), puzzleData);
+
+                // Update UI with puzzle info
+                infoDiv.innerHTML = `
+                    <div class="puzzle-links">
+                        <p><strong>Puzzle Links:</strong></p>
+                        <a href="${puzzleUrl}" class="puzzle-link">${puzzleUrl}</a>
+                        <button onclick="window.location.href='${puzzleUrl}'" class="generate-button">
+                            Start Puzzle
+                        </button>
+                    </div>
+                    <div class="qr-container">
+                        <div class="qr-code">
+                            <h4>Puzzle QR</h4>
+                            <div id="puzzleQR"></div>
+                        </div>
+                    </div>
+                `;
+
+                // Generate single QR code
+                new QRCode(document.getElementById("puzzleQR"), {
+                    text: puzzleUrl,
+                    width: 128,
+                    height: 128,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+            } catch (error) {
+                console.error('Error generating puzzle:', error);
+                infoDiv.innerHTML = `
+                    <div class="error-message" style="color: red; padding: 15px; background: #ffebee; border-radius: 4px; margin: 10px;">
+                        <h3 style="margin: 0 0 10px 0">Error</h3>
+                        <p style="margin: 5px 0">Failed to generate puzzle. Please try again later.</p>
+                        <p style="margin: 5px 0; font-size: 0.8em; color: #666;">${error.message}</p>
+                    </div>
+                `;
+            }
+        };
+
+        // Make these functions global
+        window.showAdminModal = function() {
+            document.getElementById('adminModal').style.display = 'flex';
+        };
+
+        window.checkAdminCode = function() {
+            const code = document.getElementById('adminCode').value;
+            if (code === '4885') {
+                window.location.href = 'admin.html';
+            } else {
+                alert('Incorrect code. Please try again.');
+                window.location.reload();
+            }
+        };
+
+        // Add clear data function
+        window.clearAllData = function() {
+            try {
+                // Clear all storage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Clear cookies
+                document.cookie.split(";").forEach(cookie => {
+                    document.cookie = cookie.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                });
+
+                // Clear cache and site data (requires user confirmation)
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => {
+                            caches.delete(name);
+                        });
+                    });
+                }
+
+                alert('All local data has been cleared successfully!');
+                // Reload the page to ensure clean state
+                window.location.reload();
+            } catch (error) {
+                console.error('Error clearing data:', error);
+                alert('Error clearing data. Some items may not have been cleared completely.');
+            }
+        };
+    </script>
+</body>
+</html>

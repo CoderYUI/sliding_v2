@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Event Admin</title>
+    <link rel="stylesheet" href="./admin-styles.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="admin-panel">
+        <div class="container">
+            <h1>Event Admin Panel</h1>
+            <div class="admin-panel">
+                <div class="stats-panel">
+                    <h2>Event Statistics</h2>
+                    <p>Players Connected: <span id="connectedCount">0</span></p>
+                </div>
+                <div class="control-panel">
+                    <button id="startEvent" class="admin-button">Start Event</button>
+                    <button id="resetEvent" class="admin-button">Reset Event</button>
+                    <button id="publishLeaderboard" class="admin-button" disabled>Publish & Download Leaderboard</button>
+                </div>
+                <div class="registration-controls">
+                    <h3>Registration Control</h3>
+                    <div class="status-container">
+                        <span id="registrationStatus" class="status-indicator">Checking...</span>
+                        <button id="toggleRegistration" class="admin-button">Loading...</button>
+                    </div>
+                </div>
+                <div class="players-list">
+                    <h2>Connected Players</h2>
+                    <div id="playerList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="./admin.js"></script>
+    <script>
+        // Add puzzleNumber to game state when starting the game
+        async function startGame() {
+            try {
+                const puzzleRef = ref(realtimeDb, 'currentPuzzle');
+                const snapshot = await get(puzzleRef);
+                const currentPuzzle = snapshot.val();
+
+                if (!currentPuzzle || !currentPuzzle.puzzleNumber) {
+                    alert('No puzzle selected. Please generate a puzzle first.');
+                    return;
+                }
+
+                // Set game state with puzzle number
+                await set(ref(realtimeDb, 'gameState'), {
+                    started: true,
+                    startTime: Date.now(),
+                    timeLimit: 5 * 60 * 1000, // 5 minutes
+                    puzzleNumber: currentPuzzle.puzzleNumber // Add puzzle number to game state
+                });
+
+                updateGameStatus('Game started!');
+            } catch (error) {
+                console.error('Error starting game:', error);
+                alert('Error starting game. Please try again.');
+            }
+        }
+
+        // ...existing code...
+    </script>
+</body>
+</html>

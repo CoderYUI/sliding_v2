@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [],
+  "routes": [
+    {
+      "src": "/images/(.*)",
+      "dest": "/images/$1"
+    },
+    {
+      "src": "/registration",
+      "dest": "/registration.html"
+    },
+    {
+      "src": "/thankyou",
+      "dest": "/thankyou.html"
+    },
+    {
+      "src": "/(.*)\\.js",
+      "dest": "/$1.js"
+    },
+    {
+      "src": "/(.*)\\.css",
+      "dest": "/$1.css"
+    },
+    {
+      "src": "/(.*)\\.html",
+      "dest": "/$1.html"
+    },
+    {
+      "src": ".*",
+      "dest": "/index.html"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+name = "sliding-puzzle-platform"
+compatibility_date = "2023-01-01"
+
+[site]
+bucket = "./dist"
+
+[[routes]]
+pattern = "/images/*"
+serve_static = true
+
+[[routes]]
+pattern = "/*"
+serve_single_page_app = true
+
+[env.production.vars]
+VITE_FIREBASE_API_KEY = "AIzaSyAPQR-qVqnzAcFTfx3M1NXe_2q2xk2l1cE"
+VITE_FIREBASE_AUTH_DOMAIN = "slide-9c643.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID = "slide-9c643"
+VITE_FIREBASE_STORAGE_BUCKET = "slide-9c643.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID = "414316100582"
+VITE_FIREBASE_APP_ID = "1:414316100582:web:83cf8fe4959da2c30bf427"
+VITE_FIREBASE_DATABASE_URL = "https://slide-9c643-default-rtdb.asia-southeast1.firebasedatabase.app/"

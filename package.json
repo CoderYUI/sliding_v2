@@ -1,0 +1,23 @@
+{
+  "name": "sliding-puzzle-platform",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vercel --prod --build-env VITE_FIREBASE_API_KEY=AIzaSyAPQR-qVqnzAcFTfx3M1NXe_2q2xk2l1cE --build-env VITE_FIREBASE_AUTH_DOMAIN=slide-9c643.firebaseapp.com --build-env VITE_FIREBASE_PROJECT_ID=slide-9c643 --build-env VITE_FIREBASE_STORAGE_BUCKET=slide-9c643.firebasestorage.app --build-env VITE_FIREBASE_MESSAGING_SENDER_ID=414316100582 --build-env VITE_FIREBASE_APP_ID=1:414316100582:web:83cf8fe4959da2c30bf427 --build-env VITE_FIREBASE_DATABASE_URL=https://slide-9c643-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    "pages:deploy": "npm run build && wrangler pages publish dist",
+    "pages:dev": "wrangler pages dev dist"
+  },
+  "dependencies": {
+    "firebase": "^10.7.0",
+    "vite": "^6.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

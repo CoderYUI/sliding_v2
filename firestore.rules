@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /completions/{playerId} {
+      allow read: if true;
+      allow write: if true;
+      
+      // Validate completion data
+      allow create: if request.resource.data.keys().hasAll(['name', 'time', 'moves', 'completedAt', 'status', 'puzzleNumber']);
+    }
+    match /players/{playerId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /leaderboard/{entry} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /leaderboards/{leaderboardId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /persistentSessions/{sessionId} {
+      allow read, write: if true;
+    }
+    match /feedback/{feedbackId} {
+      allow create: if request.resource.data.keys().hasAll(['playerId', 'playerName', 'timestamp', 'ratings', 'suggestion'])
+                   && request.resource.data.ratings.keys().hasAll(['enjoyment', 'difficulty', 'recommendation']);
+      allow read: if true;
+    }
+  }
+}

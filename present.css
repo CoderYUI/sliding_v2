@@ -1,0 +1,817 @@
+@import url('registration.css');
+
+/* Game Phase Styles */
+.game-phase {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 0 20px var(--puzzle-glow);
+    transition: all 0.5s ease-in-out;
+}
+
+.hidden {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    position: absolute;
+}
+
+.phase-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 2rem;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 2rem;
+    text-shadow: 0 0 10px var(--glow-color);
+}
+
+/* Players Grid */
+.players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 2rem;
+    margin: 2rem auto;
+    padding: 1rem;
+    max-width: 1000px;
+}
+
+.player-card {
+    background: var(--background-color);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 0 20px var(--puzzle-glow);
+    transition: all 0.3s ease;
+    animation: fadeIn 0.5s ease-out;
+    border: 2px solid rgba(255, 215, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.player-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 15px 15px 0 0;
+}
+
+.player-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 25px var(--puzzle-glow);
+    border-color: var(--primary-color);
+}
+
+.player-card .player-avatar {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    border: 3px solid var(--primary-color);
+    padding: 3px;
+    background: rgba(255, 215, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.player-card .player-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.player-card:hover .player-avatar img {
+    transform: scale(1.1);
+}
+
+.player-card .player-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--text-color);
+    margin-top: 1rem;
+    text-shadow: 0 0 5px var(--puzzle-glow);
+}
+
+/* Update player progress card styles */
+.player-progress-card {
+    /* Remove existing box shadow and background */
+    box-shadow: none;
+    background: transparent;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.player-progress-card.completed {
+    border: 2px solid var(--primary-color);
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.player-progress-card.completed .progress-ring-circle {
+    stroke: #28a745;
+}
+
+.player-progress-card.timeout .progress-ring-circle {
+    stroke: #dc3545;
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+
+.player-info .player-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+}
+
+.player-details {
+    flex: 1;
+}
+
+.player-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+}
+
+.player-status {
+    font-size: 0.8rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.status-playing {
+    background: rgba(255, 215, 0, 0.2);
+    color: var(--primary-color);
+}
+
+.status-completed {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.progress-container,
+.progress-bar,
+.progress-text {
+    display: none;
+}
+
+.completion-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+/* Game Progress Styles */
+.game-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Update active players container */
+.active-players {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* 6 columns to fit more players */
+    gap: 1.5rem; /* Reduced gap between players */
+    padding: 1rem;
+    max-width: 1400px; /* Increased max-width to accommodate more columns */
+    margin: 0 auto;
+}
+
+.player-box {
+    background: var(--background-color);
+    border-radius: 12px; /* Slightly reduced border radius */
+    padding: 1rem 0.75rem; /* Reduced padding */
+    text-align: center;
+    box-shadow: 0 0 10px var(--puzzle-glow);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem; /* Reduced gap */
+    width: 120px; /* Reduced width */
+    border: 2px solid transparent; /* Default border */
+}
+
+.player-box.completed {
+    border-color: #28a745;
+    transform: scale(1); /* Remove scale animation */
+    animation: none; /* Remove pulse animation */
+}
+
+.player-box.timeout {
+    border-color: #dc3545;
+    transform: scale(1);
+    animation: none;
+}
+
+.player-box.timeout .player-avatar {
+    border-color: #dc3545;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);
+}
+
+.player-box.timeout .player-name {
+    color: #dc3545;
+}
+
+.avatar-container {
+    position: relative;
+    width: 70px; /* Reduced avatar size */
+    height: 70px;
+}
+
+.player-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    position: relative;
+    z-index: 2;
+    border: 2px solid var(--primary-color);
+}
+
+.player-box.completed .player-avatar {
+    border-color: #28a745;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.3);
+}
+
+.progress-ring {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: calc(100% + 12px);
+    height: calc(100% + 12px);
+    z-index: 1;
+}
+
+.progress-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.3));
+}
+
+.progress-ring circle {
+    stroke-width: 6;
+    stroke-linecap: round;
+    fill: none;
+    stroke: rgba(255, 193, 7, 0.8); /* Default progress color (amber) */
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+    transition: all 0.5s ease;
+}
+
+.player-box.completed .progress-ring circle {
+    stroke: rgba(40, 167, 69, 0.8); /* Completed color (green) */
+    stroke-dashoffset: 0 !important; /* Force full circle when completed */
+    filter: drop-shadow(0 0 4px rgba(40, 167, 69, 0.5));
+}
+
+.progress-ring circle.timeout {
+    stroke: rgba(220, 53, 69, 0.8);
+    stroke-dashoffset: 0 !important;
+    filter: drop-shadow(0 0 4px rgba(220, 53, 69, 0.5));
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem; /* Reduced gap */
+    width: 100%;
+}
+
+.player-name {
+    font-weight: bold;
+    font-size: 0.9rem; /* Reduced font size */
+    color: var(--text-color);
+    margin-bottom: 0.15rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100px; /* Limit name width */
+}
+
+.player-box.completed .player-name {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.player-status {
+    font-size: 0.8rem; /* Reduced font size */
+    padding: 0.2rem 0.6rem;
+    border-radius: 15px;
+    width: fit-content;
+    font-weight: bold;
+}
+
+.player-status.playing {
+    background: rgba(255, 215, 0, 0.2);
+    color: var(--primary-color);
+}
+
+.player-status.completed {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.player-status.timeout {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.player-status.status-playing {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.player-status.status-completed {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.player-status.status-timeout {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.completion-check {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px; /* Reduced checkmark size */
+    height: 20px;
+    background: #28a745;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    z-index: 3;
+    border: 2px solid var(--background-color);
+}
+
+/* Completion Phase Styles */
+.completion-message {
+    text-align: center;
+    margin: 3rem 0;
+}
+
+.trophy-animation {
+    font-size: 5rem;
+    animation: trophyBounce 2s infinite;
+}
+
+/* Leaderboard Preview Styles */
+.podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 300px;
+    margin: 2rem 0;
+}
+
+.podium-place {
+    width: 200px;
+    text-align: center;
+    transition: all 0.5s ease;
+}
+
+.podium-place:nth-child(1) {
+    animation: podiumWinner 1s ease-out;
+}
+
+/* Add Leaderboard Modal Styles */
+.view-leaderboard-btn {
+    margin: 2rem auto;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.view-leaderboard-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--puzzle-glow);
+}
+
+.leaderboard-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.leaderboard-content {
+    background: var(--background-color);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 25px var(--puzzle-glow);
+    max-width: 90%;
+    width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.team-column {
+    min-width: 200px;
+}
+
+.team-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.team-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-color);
+}
+
+.current-player {
+    background: rgba(255, 215, 0, 0.1);
+    font-weight: bold;
+    position: relative;
+    border-left: 4px solid gold;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.leaderboard-table th {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.current-player {
+    background: rgba(255, 215, 0, 0.1);
+    font-weight: bold;
+}
+
+.status.completed {
+    color: #28a745;
+}
+
+.status.timeout {
+    color: #dc3545;
+}
+
+.close-modal {
+    margin-top: 1rem;
+    padding: 0.8rem 2rem;
+    background: var(--primary-color);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes trophyBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes podiumWinner {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Add animation for completion */
+@keyframes completionPulse {
+    0%, 100% { transform: scale(1); }
+}
+
+/* Leaderboard Loader Styles */
+.leaderboard-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 12px;
+    max-width: 400px;
+}
+
+.loader-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 215, 0, 0.3);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loader-text {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    text-align: center;
+    margin: 0;
+    opacity: 0.8;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Loading Overlay Styles */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+.loading-overlay.fade-out {
+    opacity: 0;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 215, 0, 0.3);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.loading-message {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    text-shadow: 0 0 10px var(--glow-color);
+}
+
+/* Player Join Animation */
+.player-join-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--secondary-color);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px var(--puzzle-glow);
+    animation: slideIn 0.5s ease-out;
+    z-index: 1000;
+    transition: opacity 0.5s ease;
+}
+
+.player-join-notification.fade-out {
+    opacity: 0;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.notification-icon {
+    font-size: 1.5rem;
+    animation: wave 1s infinite;
+}
+
+@keyframes wave {
+    0%, 100% { transform: rotate(-10deg); }
+    50% { transform: rotate(10deg); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Modal fade-out animation */
+.leaderboard-modal.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .game-phase {
+        margin: 1rem;
+        padding: 1rem;
+    }
+
+    .phase-title {
+        font-size: 1.5rem;
+    }
+
+    .players-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1rem;
+        padding: 0.5rem;
+    }
+
+    .player-card {
+        padding: 1rem;
+    }
+
+    .player-card .player-avatar {
+        width: 60px;
+        height: 60px;
+    }
+
+    .player-card .player-name {
+        font-size: 1rem;
+    }
+
+    .game-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .progress-ring {
+        width: 150px;
+        height: 150px;
+    }
+
+    .player-progress-card {
+        padding: 0.8rem;
+    }
+
+    .player-info .player-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .player-name {
+        font-size: 1rem;
+    }
+
+    .completion-info {
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .active-players {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 2rem; /* Keep significant gap on mobile */
+        padding: 1rem;
+    }
+
+    .player-box {
+        padding: 1rem;
+        width: 120px;
+    }
+
+    .player-box.completed {
+        width: 140px;
+    }
+
+    .avatar-container {
+        width: 70px;
+        height: 70px;
+    }
+
+    .player-name {
+        font-size: 1rem;
+    }
+
+    .player-status {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.6rem;
+    }
+
+    .completion-check {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+    }
+
+    .leaderboard-content {
+        padding: 1rem;
+        width: 95%;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .view-leaderboard-btn {
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .leaderboard-loader {
+        margin: 1rem;
+        padding: 1rem;
+    }
+
+    .loader-spinner {
+        width: 30px;
+        height: 30px;
+    }
+
+    .loader-text {
+        font-size: 1rem;
+    }
+}
+
+/* Add responsive layout for different screen sizes */
+@media (max-width: 1400px) {
+    .active-players {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+@media (max-width: 1200px) {
+    .active-players {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Theme Switch Styles */
+.theme-switch {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    animation: none;
+    box-shadow: none;
+    vertical-align: middle;
+    position: static;
+}
+
+.footer-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0;
+}
+
+/* Update player progress styles */
+.avatar-progress-container {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    margin-right: 1rem;
+}

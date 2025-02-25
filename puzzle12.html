@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Puzzle 12 - QRiosity</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <script type="module" src="./timeSync.js"></script>
+    <script type="module">
+        import { realtimeDb } from './firebase-config.js';
+        import { ref, onValue } from 'firebase/database';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const resetRef = ref(realtimeDb, 'systemState/reset');
+            onValue(resetRef, (snapshot) => {
+                const resetData = snapshot.val();
+                if (resetData?.action === 'reset') {
+                    sessionStorage.clear();
+                    window.location.replace('/thankyou.html');
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeIcon = document.getElementById('theme-icon');
+            const themeSwitch = document.querySelector('.theme-switch');
+            
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeIcon.setAttribute('name', 'sunny-outline');
+            }
+
+            themeSwitch.addEventListener('click', () => {
+                themeSwitch.classList.add('switching');
+                document.body.classList.toggle('dark-theme');
+                const isDark = document.body.classList.contains('dark-theme');
+                themeIcon.setAttribute('name', isDark ? 'sunny-outline' : 'moon-outline');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                
+                setTimeout(() => {
+                    themeSwitch.classList.remove('switching');
+                }, 500);
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- Nav section -->
+    <nav>
+        <div class="logo">
+            <img src="/images/logo/logo_light.jpg" alt="Light Logo" class="logo-light" draggable="false">
+            <img src="/images/logo/logo_dark.jpg" alt="Dark Logo" class="logo-dark" draggable="false">
+        </div>
+        <div class="game-title">
+            <span class="title-qr">QR</span><span class="title-iosity">iosity</span>
+        </div>
+        <div class="nav-logo">
+            <img src="/images/logo/advitya_light.png" alt="Advitya Light Logo" class="logo-light" draggable="false">
+            <img src="/images/logo/advitya_dark.png" alt="Advitya Dark Logo" class="logo-dark" draggable="false">
+        </div>
+    </nav>
+
+    <!-- Remove theme switch from here -->
+
+    <!-- Loading overlay - Add this back -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Loading puzzle...</p>
+    </div>
+
+    <!-- Countdown overlay -->
+    <div id="countdownOverlay" class="countdown-overlay">
+        <div id="countdown" class="countdown">5</div>
+    </div>
+
+    <!-- Main content -->
+    <main class="puzzle-container" id="puzzleContainer">
+        <h1 class="puzzle-title">Solve the Puzzle</h1>
+        
+        <div class="game-info">
+            <div id="timer" class="timer">5:00</div>
+            <div id="moves" class="moves">Moves: 0</div>
+        </div>
+        
+        <div id="board" class="puzzle-board"></div>
+    </main>
+
+    <!-- Modals -->
+    <div id="successModal" class="modal">
+        <div class="modal-content success-modal">
+            <h2>Congratulations!</h2>
+            <div class="stats">
+                <div class="stat-item">Time: <span id="finalTime"></span></div>
+                <div class="stat-item">Moves: <span id="finalMoves"></span></div>
+            </div>
+            <div class="completed-puzzle">
+                <img id="completedImage" src="/images/puzzle.png" alt="Completed Puzzle">
+            </div>
+            <p class="puzzle-quote"></p>
+        </div>
+    </div>
+
+    <div id="timeoutModal" class="modal">
+        <div class="modal-content timeout-modal">
+            <h2>Time's Up!</h2>
+            <div class="stats">
+                <div class="stat-item">Moves: <span id="timeoutMoves"></span></div>
+            </div>
+            <div class="completed-puzzle">
+                <img id="timeoutImage" src="" alt="Completed Puzzle">
+            </div>
+            <p class="puzzle-quote"></p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">
+                <p class="footer-credit">Made</span> by VITERA Club ...
+                    <button class="theme-switch">
+                        <ion-icon name="moon-outline" id="theme-icon"></ion-icon>
+                    </button>
+                </p>
+            </div>
+        </div>
+        <div class="footer-logo">
+            <img src="/images/logo/vitera_landscape_light.png" alt="Vitera Landscape Light Logo" class="logo-light" draggable="false">
+            <img src="/images/logo/vitera_landscape_dark.png" alt="Vitera Landscape Dark Logo" class="logo-dark" draggable="false">
+        </div>
+    </footer>
+
+    <script type="module" src="./script.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+</body>
+</html>
